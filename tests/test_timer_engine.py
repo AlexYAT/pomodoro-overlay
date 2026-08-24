@@ -79,6 +79,39 @@ class TestTimerEngine(unittest.TestCase):
         self.assertEqual(engine.total_pomodoros_since_start, 0)
         self.assertAlmostEqual(engine.remaining_seconds(), 25 * 60, delta=1)
 
+    def test_cycle_and_run_numbers_work_and_breaks(self) -> None:
+        cfg = TimerConfig(
+            work_minutes=1,
+            short_break_minutes=1,
+            long_break_minutes=1,
+            sessions_before_long_break=4,
+        )
+        engine = TimerEngine(config=cfg)
+        self.assertEqual(engine.mode, TimerMode.WORK)
+        self.assertEqual(engine.cycle_number, 1)
+        self.assertEqual(engine.run_number, 1)
+
+        engine.skip()
+        self.assertEqual(engine.mode, TimerMode.SHORT_BREAK)
+        self.assertEqual(engine.cycle_number, 1)
+        self.assertEqual(engine.run_number, 1)
+
+        engine.skip()
+        self.assertEqual(engine.mode, TimerMode.WORK)
+        self.assertEqual(engine.cycle_number, 2)
+        self.assertEqual(engine.run_number, 1)
+
+        engine._total_pomodoros_since_start = 3
+        engine._session_count = 3
+        engine.set_mode(TimerMode.WORK)
+        self.assertEqual(engine.cycle_number, 4)
+        self.assertEqual(engine.run_number, 4)
+
+        engine._on_complete()
+        self.assertEqual(engine.mode, TimerMode.LONG_BREAK)
+        self.assertEqual(engine.cycle_number, 4)
+        self.assertEqual(engine.run_number, 4)
+
 
 if __name__ == "__main__":
     unittest.main()

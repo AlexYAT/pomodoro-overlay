@@ -81,10 +81,10 @@ def _paint_ring_and_text(
     mode: TimerMode,
     state: TimerState,
     pulse_phase: float,
-    session_count: int = 0,
-    total_pomodoros_since_start: int = 0,
+    cycle_number: int = 1,
+    run_number: int = 1,
 ) -> None:
-    """Draw base ring + progress arc + time; в Work: N (всего за сеанс); в перерывах номер не показывать."""
+    """Draw base ring + progress arc + time; номер в цикле (всего за сеанс) — и в работе, и в паузе."""
     side = min(w, h)
     cx, cy = w / 2, h / 2
     margin = 12
@@ -130,23 +130,17 @@ def _paint_ring_and_text(
     painter.setPen(QColor(180, 180, 185))
     mode_text = MODE_LABELS.get(mode, "Work")
 
-    if mode == TimerMode.WORK:
-        # Только в Work: номер в цикле (в скобках — всего за сеанс)
-        pomodoro_in_cycle = session_count + 1
-        pomodoro_in_run = total_pomodoros_since_start + 1
-        pomodoro_text = f"{pomodoro_in_cycle} ({pomodoro_in_run})"
-        painter.setPen(QColor(220, 220, 225))
-        small_font.setPointSizeF(max(9, ring_radius * 0.14))
-        painter.setFont(small_font)
-        pomodoro_rect = QRectF(0, cy - ring_radius * 0.08, w, ring_radius * 0.28)
-        painter.drawText(pomodoro_rect, Qt.AlignmentFlag.AlignCenter, pomodoro_text)
-        painter.setPen(QColor(180, 180, 185))
-        small_font.setPointSizeF(max(8, ring_radius * 0.12))
-        painter.setFont(small_font)
-        mode_rect = QRectF(0, cy + ring_radius * 0.22, w, ring_radius * 0.5)
-    else:
-        # В перерывах: только режим, без номера и скобок
-        mode_rect = QRectF(0, cy - ring_radius * 0.05, w, ring_radius * 0.55)
+    # Номер в цикле (в скобках — всего за сеанс): и в Work, и в паузе
+    number_text = f"{cycle_number} ({run_number})"
+    painter.setPen(QColor(220, 220, 225))
+    small_font.setPointSizeF(max(9, ring_radius * 0.14))
+    painter.setFont(small_font)
+    number_rect = QRectF(0, cy - ring_radius * 0.08, w, ring_radius * 0.28)
+    painter.drawText(number_rect, Qt.AlignmentFlag.AlignCenter, number_text)
+    painter.setPen(QColor(180, 180, 185))
+    small_font.setPointSizeF(max(8, ring_radius * 0.12))
+    painter.setFont(small_font)
+    mode_rect = QRectF(0, cy + ring_radius * 0.22, w, ring_radius * 0.5)
     painter.drawText(mode_rect, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter, mode_text)
 
 
@@ -305,8 +299,8 @@ class OverlayWindow(QWidget):
             self._display_mode,
             self._display_state,
             self._pulse_phase,
-            self._engine.session_count,
-            self._engine.total_pomodoros_since_start,
+            self._engine.cycle_number,
+            self._engine.run_number,
         )
 
     def _in_resize_zone(self, pos: QPoint) -> bool:

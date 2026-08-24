@@ -89,6 +89,22 @@ class TimerEngine:
     def session_count(self) -> int:
         return self._session_count
 
+    @property
+    def cycle_number(self) -> int:
+        """1-based index in the current cycle: pomodoro in Work, or the break after it."""
+        if self._mode == TimerMode.LONG_BREAK:
+            return max(1, self.config.sessions_before_long_break)
+        if self._mode == TimerMode.SHORT_BREAK:
+            return self._session_count if self._session_count > 0 else 1
+        return self._session_count + 1
+
+    @property
+    def run_number(self) -> int:
+        """1-based index since last full reset: current pomodoro, or the break after it."""
+        if self._mode in (TimerMode.SHORT_BREAK, TimerMode.LONG_BREAK):
+            return self._total_pomodoros_since_start if self._total_pomodoros_since_start > 0 else 1
+        return self._total_pomodoros_since_start + 1
+
     def _now(self) -> float:
         return time.monotonic()
 
