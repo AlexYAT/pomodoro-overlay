@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
 from overlay_window import OverlayWindow
 from settings import load_timer_config
+from single_instance import SingleInstanceGuard
 from timer_engine import TimerConfig, TimerEngine, TimerMode
 
 
@@ -49,6 +50,10 @@ def main() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("Pomodoro Overlay Timer")
     app.setQuitOnLastWindowClosed(False)
+
+    guard = SingleInstanceGuard(parent=app)
+    if not guard.acquire():
+        return 0
 
     config = load_timer_config()
     engine = TimerEngine(config=config)
@@ -113,6 +118,7 @@ def main() -> int:
         ))
         tray.show()
 
+    guard.activated.connect(show_overlay)
     overlay.show()
 
     return app.exec()
